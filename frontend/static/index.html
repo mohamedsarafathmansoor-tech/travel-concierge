@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Concierge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --accent: #0d9488;
+    --accent-gradient: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #ffffff;
+    --chip-bg: #f1f5f9;
+  }
+
+  body.dark {
+    --bg: #0f172a;
+    --card-bg: #1e293b;
+    --border: #334155;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --input-bg: #1e293b;
+    --chip-bg: #334155;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    color: var(--text-primary);
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  header {
+    background: var(--accent-gradient);
+    color: #fff;
+    padding: 0.9rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+  .header-brand { display: flex; align-items: center; gap: 0.75rem; }
+  .header-icon { font-size: 1.5rem; }
+  .header-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+  .header-actions { display: flex; align-items: center; gap: 0.6rem; }
+  .header-btn {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .header-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+  }
+  .status-dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; }
+
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1rem;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .msg {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 88%;
+    animation: fadeIn 0.25s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  .msg.agent {
+    align-self: flex-start;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  .msg.user .avatar { background: var(--accent-gradient); color: #fff; }
+  .msg.agent .avatar { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+
+  .msg-content { display: flex; flex-direction: column; gap: 0.25rem; max-width: 100%; }
+  .sender-name { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+  .msg.user .sender-name { text-align: right; }
+
+  .bubble {
+    padding: 0.85rem 1.2rem;
+    border-radius: 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+    line-height: 1.5;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    color: var(--text-primary);
+  }
+  .msg.user .bubble {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.25);
+  }
+  .msg.agent .bubble {
+    border-bottom-left-radius: 4px;
+    border-left: 3.5px solid var(--accent);
+  }
+  .bubble.rich { background: transparent; border: none; padding: 0; box-shadow: none; white-space: normal; }
+
+  /* --- Typing Indicator --- */
+  .typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.4rem 0.5rem;
+  }
+  .typing-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: typingPulse 1.4s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(1) { animation-delay: 0s; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+    40% { transform: scale(1.15); opacity: 1; }
+  }
+
+  /* --- Category Filters & Prompt Chips --- */
+  .prompt-container {
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1rem 0.25rem;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .category-tabs {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    justify-content: center;
+    padding-bottom: 0.2rem;
+  }
+  .cat-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .cat-tab.active, .cat-tab:hover {
+    color: var(--accent);
+    background: rgba(13, 148, 136, 0.08);
+  }
+
+  .example-prompts {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-bottom: 0.4rem;
+  }
+  .prompt-chip {
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.825rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .prompt-chip:hover {
+    background: var(--accent-gradient);
+    color: #fff;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);
+  }
+
+  /* --- Form & Input Bar --- */
+  form {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--card-bg);
+    max-width: 820px;
+    margin: 0 auto;
+    width: 100%;
+    align-items: center;
+  }
+  .input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  input {
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    border: 1.5px solid var(--border);
+    border-radius: 26px;
+    font-size: 0.95rem;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3.5px rgba(13, 148, 136, 0.15);
+  }
+  .send-btn {
+    padding: 0.85rem 1.5rem;
+    border: none;
+    border-radius: 26px;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2);
+  }
+  .send-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  }
+
+  /* --- A2UI Cards --- */
+  .a2card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.2rem;
+    background: var(--card-bg);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    max-width: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .a2card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07); }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.6rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.5rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.45; color: var(--text-primary); }
+  .a2text.a2-h1 { font-size: 1.5rem; font-weight: 700; }
+  .a2text.a2-h2 { font-size: 1.25rem; font-weight: 700; }
+  .a2text.a2-h3 { font-size: 1.1rem; font-weight: 600; }
+  .a2text.a2-h4 { font-size: 1rem; font-weight: 600; }
+  .a2text.a2-caption { font-size: 0.85rem; color: var(--text-muted); }
+  .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 12px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-brand">
+    <span class="header-icon">✈️</span>
+    <span class="header-title">Travel Concierge</span>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      <span>Online</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button type="button" class="header-btn" onclick="clearChat()">🗑️ Clear</button>
+    <button type="button" class="header-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</header>
+
+<div id="log"></div>
+
+<div class="prompt-container">
+  <div class="category-tabs">
+    <button class="cat-tab active" onclick="setCategory('all', this)">All Ideas</button>
+    <button class="cat-tab" onclick="setCategory('destinations', this)">✈️ Destinations</button>
+    <button class="cat-tab" onclick="setCategory('places', this)">☕ Nearby Places</button>
+    <button class="cat-tab" onclick="setCategory('currency', this)">💱 Currency</button>
+  </div>
+  <div class="example-prompts" id="prompts-list">
+    <!-- Rendered dynamically -->
+  </div>
+</div>
+
+<form id="form">
+  <div class="input-wrapper">
+    <input id="input" placeholder="Ask about destinations, flights, weather, or conversions…" autocomplete="off" autofocus>
+  </div>
+  <button class="send-btn">Send ➤</button>
+</form>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const promptsList = document.getElementById("prompts-list");
+
+const promptData = [
+  { cat: "destinations", icon: "🏖️", title: "Destinations in Paris", prompt: "Find top destinations in Paris" },
+  { cat: "destinations", icon: "⛩️", title: "Destinations in Tokyo", prompt: "Search top destinations in Tokyo with local cuisine" },
+  { cat: "places", icon: "☕", title: "Cafes near Eiffel Tower", prompt: "Find nearby cafes near Eiffel Tower, Paris" },
+  { cat: "places", icon: "🍕", title: "Restaurants in New York", prompt: "Find nearby Italian restaurants in New York" },
+  { cat: "currency", icon: "💱", title: "Convert 150 EUR to USD", prompt: "Convert 150 EUR to USD" },
+  { cat: "currency", icon: "💴", title: "Convert 10000 JPY to USD", prompt: "Convert 10000 JPY to USD" }
+];
+
+function renderPrompts(category) {
+  promptsList.innerHTML = "";
+  const filtered = category === "all" ? promptData : promptData.filter(p => p.cat === category);
+  filtered.forEach(p => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "prompt-chip";
+    btn.textContent = `${p.icon} ${p.title}`;
+    btn.onclick = () => sendExample(p.prompt);
+    promptsList.appendChild(btn);
+  });
+}
+
+function setCategory(cat, btn) {
+  document.querySelectorAll(".cat-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderPrompts(cat);
+}
+
+function sendExample(text) {
+  input.value = text;
+  form.dispatchEvent(new Event("submit", { cancelable: true }));
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.toggle("dark");
+  const btn = document.getElementById("theme-btn");
+  btn.textContent = isDark ? "☀️ Light" : "🌙 Dark";
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+}
+
+function clearChat() {
+  log.innerHTML = "";
+  initGreeting();
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function bubble(who) {
+  const m = el("div", "msg " + who);
+  const avatar = el("div", "avatar", who === "user" ? "👤" : "🧭");
+  const content = el("div", "msg-content");
+  const sender = el("div", "sender-name", who === "user" ? "You" : "Travel Concierge");
+  const b = el("div", "bubble");
+  content.appendChild(sender);
+  content.appendChild(b);
+  m.appendChild(avatar);
+  m.appendChild(content);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+function createTypingIndicator() {
+  const ind = el("div", "typing-indicator");
+  ind.appendChild(el("span", "typing-dot"));
+  ind.appendChild(el("span", "typing-dot"));
+  ind.appendChild(el("span", "typing-dot"));
+  return ind;
+}
+
+function initGreeting() {
+  const b = bubble("agent");
+  b.textContent = "👋 Welcome to Travel Concierge! How can I help you plan your next trip today?";
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("theme") === "dark") toggleTheme();
+    renderPrompts("all");
+    initGreeting();
+  });
+} else {
+  if (localStorage.getItem("theme") === "dark") toggleTheme();
+  renderPrompts("all");
+  initGreeting();
+}
+
+/* --- A2UI mini-renderer --- */
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+function iconName(n) { return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase(); }
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) {
+      if (c && c.component) {
+        if (c.component.Text) out.push(boundStr(c.component.Text.text));
+        else if (c.component.Image) {
+          const src = boundStr(c.component.Image.url || c.component.Image.src);
+          if (src) out.push(`[Image: ${src}]`);
+        }
+      }
+    }
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  bubble("user").textContent = text;
+  input.value = "";
+  
+  const b = bubble("agent");
+  b.textContent = "";
+  b.appendChild(createTypingIndicator());
+
+  try {
+    const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+});
+</script>
+</body>
+</html>
